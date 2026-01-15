@@ -141,8 +141,11 @@ const up = (e) => {
 };
 
 function clearScreen() {
-  location.reload();
+  terminalOutput.innerHTML = "";
+  userInput.innerHTML = "";
+  // Optional: Print a small "Cleared" message or just leave it blank
 }
+
 document.addEventListener("keydown", up);
 
 document.addEventListener("keydown", backspace);
