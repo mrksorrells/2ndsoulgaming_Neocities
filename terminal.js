@@ -13,58 +13,68 @@ const app = () => {
 };
 
 const execute = function executeCommand(input) {
-  // 1. Keep a "raw" copy of the input so we preserve filename casing
   let rawInput = input;
-
-  // 2. Lowercase the input for command matching (so 'CAT' works same as 'cat')
   input = input.toLowerCase();
-
   lastCommands.push(input);
-  let output;
 
-  if (input.length === 0) {
+  if (input.length === 0) return;
+
+  // --- 1. The 'ls' Command ---
+  if (input === "ls") {
+    // Print the command line first
+    terminalOutput.innerHTML += `<div class="terminal-line"><span class="success">➜</span> <span class="directory">~</span> ls</div>`;
+
+    // Fetch the directory list we made
+    fetch("docs/directory.json")
+    .then(response => response.json())
+    .then(files => {
+      // Create a string of files separated by spaces (using &nbsp; for HTML space)
+      // You can change .join("&nbsp;&nbsp;&nbsp;") to .join("<br>") if you want a vertical list
+      let fileList = files.join("&nbsp;&nbsp;&nbsp;");
+
+      // Output nicely colored file names
+      terminalOutput.innerHTML += `<div class="terminal-line" style="color: #50fa7b;">${fileList}</div>`;
+      terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    })
+    .catch(err => {
+      terminalOutput.innerHTML += `<div class="terminal-line" style="color: #ff5555;">Error: Could not read directory.</div>`;
+    });
     return;
   }
 
-  // --- NEW: The 'cat' command logic ---
+  // --- 2. The Updated 'cat' Command ---
   if (input.startsWith("cat ")) {
-    // Split the RAW input to get the actual filename (e.g., "Newly_added_features.md")
-    // We split by space and take the second part
     let fileName = rawInput.split(" ")[1];
-
-    // Add the user's command to the screen immediately
     terminalOutput.innerHTML += `<div class="terminal-line"><span class="success">➜</span> <span class="directory">~</span> ${rawInput}</div>`;
 
-    // Fetch the file content
-    fetch(fileName)
+    // NOTICE: We added "docs/" here so it looks in the right folder!
+    fetch("docs/" + fileName)
     .then(response => {
-      if (!response.ok) {
-        throw new Error("File not found");
-      }
+      if (!response.ok) throw new Error("File not found");
       return response.text();
     })
     .then(text => {
-      // Convert plain text line breaks to HTML <br> so it looks right
-      // We also wrap it in <pre> tags to keep the spacing valid
-      let formattedText = text.replace(/\n/g, "<br>");
+      // Simple Markdown parsing: Turn # Header into H1
+      // We replace newlines with <br> first
+      let formattedText = text.replace(/</g, "&lt;"); // Escape HTML to prevent running scripts in txt files
+      formattedText = formattedText.replace(/\n/g, "<br>");
 
       terminalOutput.innerHTML += `<div class="terminal-line">${formattedText}</div>`;
       terminalOutput.scrollTop = terminalOutput.scrollHeight;
     })
     .catch(error => {
-      terminalOutput.innerHTML += `<div class="terminal-line" style="color: #ff5555;">Error: ${error.message} (Did you spell the file name correctly?)</div>`;
+      terminalOutput.innerHTML += `<div class="terminal-line" style="color: #ff5555;">File not found: ${fileName}</div>`;
       terminalOutput.scrollTop = terminalOutput.scrollHeight;
     });
-
-    // Return early so we don't trigger the "command not found" logic below
     return;
   }
-  // ------------------------------------
 
+  // --- Standard Commands ---
   if (input.indexOf("sudo") >= 0) {
     input = "sudo";
   }
 
+  let output;
   if (input == "projects") {
     open("pages/projects.html");
   } else if (input === "clear" || input === "cls") {
@@ -74,15 +84,12 @@ const execute = function executeCommand(input) {
   } else if (input === "github") {
     open("https://github.com/terminal-js");
   } else {
-    // Modified to use rawInput for display so it looks nicer
     output = `<div class="terminal-line"><span class="success">➜</span> <span class="directory">~</span> ${rawInput}</div>`;
     if (!COMMANDS.hasOwnProperty(input)) {
       output += `<div class="terminal-line">command not found: ${rawInput}</div>`;
     } else {
       output += COMMANDS[input];
     }
-
-    // Your fixed line from before (no extra <br>)
     terminalOutput.innerHTML = `${terminalOutput.innerHTML}<div class="terminal-line">${output}</div>`;
     terminalOutput.scrollTop = terminalOutput.scrollHeight;
   }
