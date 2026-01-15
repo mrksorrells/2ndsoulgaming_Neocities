@@ -3,7 +3,25 @@ let projAsk = false;
 let lastCommands = [];
 
 const COMMANDS = {
-  command1: `You can use <pre style="color:red">HTML, CSS, and JavaScript</tags> for commands! Try clicking on <h1 onclick="alert('hihi')">me<img src="https://media.giphy.com/media/3o7bu0ZQQp2QQQQQQQ/giphy.gif" alt="" width=50px height=50px></h1>`,
+help: () => {
+    // 1. Get the keys from your registry and sort them first
+    const registryKeys = Object.keys(COMMANDS).sort();
+    
+    // 2. Add your manual/hardcoded commands to the end
+    registryKeys.push("cat [filename]", "ls");
+    
+    // 3. Join them with a space for better readability
+    const formattedList = registryKeys.join(", ");
+    
+    return `Available commands: <span class="help">${formattedList}</span>`;
+  },
+
+  github: () => window.open("https://github.com/terminal-js", "_blank"),
+  projects: () => window.open("pages/projects.html", "_self"),
+  history: () => showHist(),
+  clear: () => clearScreen(),
+  cls: () => clearScreen(),
+  sudo: () => "Nice try, but you don't have root privileges here. ;)",
 };
 
 const app = () => {
@@ -12,88 +30,66 @@ const app = () => {
   document.getElementById("keyboard").focus();
 };
 
+// 1. Define static responses or complex functions here
+
+
 const execute = function executeCommand(input) {
-  let rawInput = input;
-  input = input.toLowerCase();
-  lastCommands.push(input);
+  let rawInput = input.trim();
+  let cleanInput = input.toLowerCase().trim();
+  lastCommands.push(rawInput);
 
-  if (input.length === 0) return;
+  if (cleanInput.length === 0) return;
 
-  // --- 1. The 'ls' Command ---
-  if (input === "ls") {
-    // Print the command line first
-    terminalOutput.innerHTML += `<div class="terminal-line"><span class="success">➜</span> <span class="directory">~</span> ls</div>`;
+  // Add the prompt line to the terminal first
+  terminalOutput.innerHTML += `<div class="terminal-line"><span class="success">➜</span> <span class="directory">~</span> ${rawInput}</div>`;
 
-    // Fetch the directory list we made
+  // --- Handle LS Command ---
+  if (cleanInput === "ls") {
     fetch("docs/directory.json")
-    .then(response => response.json())
-    .then(files => {
-      // Create a string of files separated by spaces (using &nbsp; for HTML space)
-      // You can change .join("&nbsp;&nbsp;&nbsp;") to .join("<br>") if you want a vertical list
-      let fileList = files.join("&nbsp;&nbsp;&nbsp;");
-
-      // Output nicely colored file names
-      terminalOutput.innerHTML += `<div class="terminal-line" style="color: #50fa7b;">${fileList}</div>`;
-      terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    })
-    .catch(err => {
-      terminalOutput.innerHTML += `<div class="terminal-line" style="color: #ff5555;">Error: Could not read directory.</div>`;
-    });
+      .then(res => res.json())
+      .then(files => {
+        let fileList = files.join("&nbsp;&nbsp;&nbsp;");
+        printToTerminal(`<span style="color: #50fa7b;">${fileList}</span>`);
+      })
+      .catch(() => printToTerminal(`<span style="color: #ff5555;">Error: Could not read directory.</span>`));
     return;
   }
 
-  // --- 2. The Updated 'cat' Command ---
-  if (input.startsWith("cat ")) {
+  // --- Handle CAT Command ---
+  if (cleanInput.startsWith("cat ")) {
     let fileName = rawInput.split(" ")[1];
-    terminalOutput.innerHTML += `<div class="terminal-line"><span class="success">➜</span> <span class="directory">~</span> ${rawInput}</div>`;
-
-    // NOTICE: We added "docs/" here so it looks in the right folder!
     fetch("docs/" + fileName)
-    .then(response => {
-      if (!response.ok) throw new Error("File not found");
-      return response.text();
-    })
-    .then(text => {
-      // Simple Markdown parsing: Turn # Header into H1
-      // We replace newlines with <br> first
-      let formattedText = text.replace(/</g, "&lt;"); // Escape HTML to prevent running scripts in txt files
-      formattedText = formattedText.replace(/\n/g, "<br>");
-
-      terminalOutput.innerHTML += `<div class="terminal-line">${formattedText}</div>`;
-      terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    })
-    .catch(error => {
-      terminalOutput.innerHTML += `<div class="terminal-line" style="color: #ff5555;">File not found: ${fileName}</div>`;
-      terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    });
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.text();
+      })
+      .then(text => {
+        let formattedText = text.replace(/</g, "&lt;").replace(/\n/g, "<br>");
+        printToTerminal(formattedText);
+      })
+      .catch(() => printToTerminal(`<span style="color: #ff5555;">File not found: ${fileName}</span>`));
     return;
   }
 
-  // --- Standard Commands ---
-  if (input.indexOf("sudo") >= 0) {
-    input = "sudo";
-  }
-
-  let output;
-  if (input == "projects") {
-    open("pages/projects.html");
-  } else if (input === "clear" || input === "cls") {
-    clearScreen();
-  } else if (input === "history") {
-    showHist();
-  } else if (input === "github") {
-    open("https://github.com/terminal-js");
+  // --- Handle Registry Commands ---
+  // If the input exists in our COMMANDS object, run it
+  if (COMMANDS.hasOwnProperty(cleanInput)) {
+    const result = COMMANDS[cleanInput]();
+    if (result) printToTerminal(result);
+  } else if (cleanInput.includes("sudo")) {
+    printToTerminal(COMMANDS.sudo());
   } else {
-    output = `<div class="terminal-line"><span class="success">➜</span> <span class="directory">~</span> ${rawInput}</div>`;
-    if (!COMMANDS.hasOwnProperty(input)) {
-      output += `<div class="terminal-line">command not found: ${rawInput}</div>`;
-    } else {
-      output += COMMANDS[input];
-    }
-    terminalOutput.innerHTML = `${terminalOutput.innerHTML}<div class="terminal-line">${output}</div>`;
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    printToTerminal(`command not found: ${rawInput}`);
   }
 };
+
+// Helper function to handle the repetitive UI updates
+function printToTerminal(htmlContent) {
+  terminalOutput.innerHTML += `<div class="terminal-line">${htmlContent}</div>`;
+  terminalOutput.scrollTop = terminalOutput.scrollHeight;
+  // Clear the input line for the next command
+  userInput.innerHTML = "";
+}
 
 const key = (e) => {
   const input = userInput.innerHTML;
