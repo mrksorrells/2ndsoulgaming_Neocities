@@ -16,7 +16,8 @@ help: () => {
     return `Available commands: <span class="help">${formattedList}</span>`;
   },
 
-  github: () => window.open("https://github.com/terminal-js", "_blank"),
+  github: () => window.open("https://github.com/mrksorrells", "_blank"),
+  games: () => 'For my GameJam and various game projects, go to: <a href="https://2ndsoul.itch.io" target="_blank" class="terminal-link">2ndSouls Itch.io</a>',
   projects: () => window.open("pages/projects.html", "_self"),
   history: () => showHist(),
   clear: () => clearScreen(),

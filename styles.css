@@ -265,3 +265,14 @@
     background-color: #151515; /* Example: Pitch Black or very dark grey */
     color: #00ff00; /* Sets the default text color (green) */
 }
+
+.terminal-link {
+  color: #00ff00; /* Match your green terminal text */
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.terminal-link:hover {
+  background-color: #00ff00;
+  color: #282a36; /* Invert colors on hover for a cool effect */
+}

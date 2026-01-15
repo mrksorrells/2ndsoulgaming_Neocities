@@ -139,6 +139,7 @@
     #de0012
     );
     -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
 }
 
@@ -227,6 +228,7 @@
     #de0012
     );
     -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
 }
 
@@ -298,12 +300,16 @@
         display: none;
     }
 
-    .fakeMenu,.fakeScreen{
+    .fakeMenu {
         width:100%;
     }
-    .fakeScreen{
-        height: 500px;
-        overflow:hidden;
+
+    .fakeScreen {
+        height: 90vh; /* Takes up 90% of the screen height */
+        width: 95vw;  /* Takes up 95% of the screen width */
+        margin: 20px auto; /* Centers it on the page */
+        display: flex;
+        flex-direction: column;
     }
   }
 
@@ -454,3 +460,30 @@
     border: none;      /* Remove that blue/grey border */
 }
 
+.terminal-window {
+  flex-grow: 1; 
+  padding: 20px;
+  /* This is the magic for the scrollbar */
+  overflow-y: auto; 
+  background-color: #282a36; 
+}
+
+/* Custom scrollbar for Chrome, Edge, and Safari */
+.terminal-window::-webkit-scrollbar {
+  width: 10px;
+}
+
+.terminal-window::-webkit-scrollbar-track {
+  background: #1e1f29; /* Dark background to match terminal */
+}
+
+.terminal-window::-webkit-scrollbar-thumb {
+  background: #50fa7b; /* Match your green text color */
+  border-radius: 5px;
+}
+
+/* For Firefox */
+.terminal-window {
+  scrollbar-width: thin;
+  scrollbar-color: #50fa7b #1e1f29;
+}
