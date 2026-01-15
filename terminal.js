@@ -87,8 +87,11 @@ const execute = function executeCommand(input) {
 // Helper function to handle the repetitive UI updates
 function printToTerminal(htmlContent) {
   terminalOutput.innerHTML += `<div class="terminal-line">${htmlContent}</div>`;
-  terminalOutput.scrollTop = terminalOutput.scrollHeight;
-  // Clear the input line for the next command
+  
+  // CHANGE: Target the parent window that actually has the scrollbar
+  const scrollContainer = document.querySelector(".terminal-window");
+  scrollContainer.scrollTop = scrollContainer.scrollHeight;
+  
   userInput.innerHTML = "";
 }
 
@@ -152,34 +155,25 @@ class Terminal extends HTMLElement {
     super();
   }
   connectedCallback() {
-    this.innerHTML = `
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://kit.fontawesome.com/3f2db6afb6.js" crossorigin="anonymous"></script>
-    <div class="terminal_window" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
-    <div class="fakeMenu">
-      <div class="fakeButtons fakeClose"></div>
-      <div class="fakeButtons fakeMinimize"></div>
-      <div class="fakeButtons fakeZoom"></div>
-    </div>
-    <div class="fakeScreen">
-      <div class="terminal-window primary-bg" onclick="document.getElementById('dummyKeyboard').focus();">
-        <div class="terminal-output" id="terminalOutput">
-          <div class="terminal-line">
-            <span class="help-msg">Type <span class="help">command1</span> to get started</span>
-              commands.<br>
-          </div>
-        </div>
+    // Inside connectedCallback()
+this.innerHTML = `
+  <div class="fakeScreen">
+    <div class="terminal-window primary-bg" onclick="document.getElementById('keyboard').focus();">
+      <div id="terminalOutput">
         <div class="terminal-line">
-          <span class="success">➜</span>
-          <span class="directory">~</span>
-          <span class="user-input" id="userInput"></span>
-          <span class="line anim-typewriter"></span>
-          <input type="text" id="keyboard" class="dummy-keyboard" />
+          <span class="help-msg">Type <span class="help">help</span> to get started</span>
         </div>
+      </div>
+      <div class="terminal-line input-line">
+        <span class="success">➜</span>
+        <span class="directory">~</span>
+        <span class="user-input" id="userInput"></span>
+        <span class="line anim-typewriter"></span>
+        <input type="text" id="keyboard" class="dummy-keyboard" />
       </div>
     </div>
   </div>
-  `
+`;
   }
 }
 
